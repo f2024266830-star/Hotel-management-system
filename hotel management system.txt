@@ -1,0 +1,171 @@
+#include <iostream>
+#include <string>
+#include <queue>
+#include <stack>
+#include <limits>
+
+using namespace std;
+
+struct Room {
+    int roomNumber;
+    string guestName;
+    bool isOccupied;
+    string roomType;
+    Room* next;
+};
+
+class Hotel {
+private:
+    Room* head;
+    queue<string> checkInQueue;
+    stack<string> checkOutStack;
+
+public:
+    Hotel() {
+        head = NULL;
+    }
+
+    // Destructor to avoid memory leak
+    ~Hotel() {
+        Room* temp;
+        while (head) {
+            temp = head;
+            head = head->next;
+            delete temp;
+        }
+    }
+
+    void addRoom(int rNo, string type) {
+        Room* newRoom = new Room();
+        newRoom->roomNumber = rNo;
+        newRoom->roomType = type;
+        newRoom->isOccupied = false;
+        newRoom->guestName = "N/A";
+        newRoom->next = head;
+        head = newRoom;
+    }
+
+    void addToCheckInQueue(string name) {
+        checkInQueue.push(name);
+        cout << name << " added to check-in queue.\n";
+    }
+
+    void checkIn(int rNo) {
+        if (checkInQueue.empty()) {
+            cout << "No guests in queue.\n";
+            return;
+        }
+
+        Room* temp = head;
+        while (temp) {
+            if (temp->roomNumber == rNo) {
+                if (!temp->isOccupied) {
+                    temp->guestName = checkInQueue.front();
+                    temp->isOccupied = true;
+                    cout << "Check-in successful: " << temp->guestName << endl;
+                    checkInQueue.pop();
+                } else {
+                    cout << "Room already occupied.\n";
+                }
+                return;
+            }
+            temp = temp->next;
+        }
+        cout << "Room not found.\n";
+    }
+
+    void checkOut(int rNo) {
+        Room* temp = head;
+        while (temp) {
+            if (temp->roomNumber == rNo && temp->isOccupied) {
+                checkOutStack.push(temp->guestName);
+                temp->guestName = "N/A";
+                temp->isOccupied = false;
+                cout << "Room " << rNo << " checked out.\n";
+                return;
+            }
+            temp = temp->next;
+        }
+        cout << "Room not found or already vacant.\n";
+    }
+
+    void displayStatus() const {
+        Room* temp = head;
+        cout << "\n--- Hotel Status ---\n";
+        while (temp) {
+            cout << "Room " << temp->roomNumber << " | "
+                 << temp->roomType << " | "
+                 << (temp->isOccupied ? "Occupied" : "Vacant")
+                 << " | Guest: " << temp->guestName << endl;
+            temp = temp->next;
+        }
+    }
+
+    void showLastCheckout() const {
+        if (!checkOutStack.empty())
+            cout << "Last checked-out guest: " << checkOutStack.top() << endl;
+        else
+            cout << "No check-out history.\n";
+    }
+};
+
+int main() {
+    Hotel myHotel;
+
+    myHotel.addRoom(101, "Deluxe");
+    myHotel.addRoom(102, "AC");
+    myHotel.addRoom(103, "Non-AC");
+
+    int choice, room;
+    string name;
+
+    do {
+        cout << "\n1. Add Guest to Queue"
+             << "\n2. Check-In"
+             << "\n3. Status"
+             << "\n4. Check-Out"
+             << "\n5. Last Check-Out"
+             << "\n6. Exit"
+             << "\nChoice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            cout << "Guest Name: ";
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            getline(cin, name);
+            myHotel.addToCheckInQueue(name);
+            break;
+
+        case 2:
+            cout << "Room No: ";
+            cin >> room;
+            myHotel.checkIn(room);
+            break;
+
+        case 3:
+            myHotel.displayStatus();
+            break;
+
+        case 4:
+            cout << "Room No: ";
+            cin >> room;
+            myHotel.checkOut(room);
+            break;
+
+        case 5:
+            myHotel.showLastCheckout();
+            break;
+
+        case 6:
+            cout << "Exiting program...\n";
+            break;
+
+        default:
+            cout << "Invalid choice.\n";
+        }
+
+    } while (choice != 6);
+
+    return 0;
+}
